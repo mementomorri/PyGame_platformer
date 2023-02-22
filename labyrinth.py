@@ -2,18 +2,18 @@ from pygame import *
 
 # Объявление параметров программы в виде констант
 GAME_DELAY = 50
-WINDOW_HEIGHT = 1000
-WINDOW_WIDTH = 1000
+WINDOW_HEIGHT = 720
+WINDOW_WIDTH = 960
 
-PLAYER_WIDTH = 96
-PLAYER_HEIGHT = 120
+PLAYER_WIDTH = 80
+PLAYER_HEIGHT = 80
 PLAYER_VELOCITY = 10
 
-OBSTACLE_WIDTH = 150
-OBSTACLE_HEIGHT = 150
+OBSTACLE_WIDTH = 125
+OBSTACLE_HEIGHT = 125
 
-BULLET_WIDTH = 15
-BULLET_HEIGHT = 15
+BULLET_WIDTH = 55
+BULLET_HEIGHT = 55
 BULLET_VELOCITY = 15
 
 
@@ -132,9 +132,9 @@ class Obstacle(GameSprite):
         Метод обновления положения препятствия и изменения направления в случае достижения крайней точки маршрута.
         Препятствие перемещается по вертикали. Предназначен для применения в игровом цикле.
         """
-        if self.rect.y <= 550:
+        if self.rect.y <= 340:
             self.direction = 'bottom'
-        if self.rect.y >= WINDOW_HEIGHT - 110:
+        if self.rect.y >= WINDOW_HEIGHT - 125:
             self.direction = 'top'
         if self.direction == 'top':
             self.rect.y -= self.velocity
@@ -168,7 +168,7 @@ class Bullet(GameSprite):
         Метод обновления положения снаряда. При выходе за пределы экрана удаляется с помощью метода kill.
         """
         self.rect.x -= self.velocity
-        if self.rect.x < 10:
+        if self.rect.x < -BULLET_WIDTH/2:
             self.kill()
 
 
@@ -185,20 +185,26 @@ def run_game() -> None:
     run = True
 
     player = Player('img/player.png', PLAYER_WIDTH, PLAYER_WIDTH, 5, 100, 0, 0)
-    obstacle = Obstacle('img/obstacle.png', OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 400, 560, 5)
     background = GameSprite('img/background.jpg', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
-    victory = GameSprite('img/finish.png', 150, 150, 30, 700)
+    victory = GameSprite('img/finish.png', 115, 115, 30, 500)
     victory_pic = GameSprite('img/victory_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
     fail_pic = GameSprite('img/fail_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
 
     bullets = sprite.Group()
     barriers = sprite.Group()
+    obstacles = sprite.Group()
+    obstacles.add(
+        Obstacle('img/obstacle.png', OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 325, 560, 7)
+    )
     barriers.add(
-        GameSprite('img/wall_1.jpg', 100, 180, 200, 1),
-        GameSprite('img/wall_1.jpg', 400, 100, 200, 181),
-        GameSprite('img/wall_1.jpg', 400, 100, 1, 450),
-        GameSprite('img/wall_1.jpg', 100, 260, 300, 450),
-        GameSprite('img/wall_1.jpg', 100, 180, 300, 900)
+        GameSprite('img/wall_1.jpg', 60, 125, 200, 0),
+        GameSprite('img/wall_1.jpg', 400, 60, 200, 125),
+        GameSprite('img/wall_1.jpg', 300, 60, 0, 300),
+        GameSprite('img/wall_1.jpg', 60, 125, 240, 360),
+        GameSprite('img/wall_1.jpg', 60, 180, 240, 610),
+        GameSprite('img/wall_3.jpg', 60, 200, 680, 200),
+        GameSprite('img/wall_3.jpg', 60, 200, 680, 450),
+        GameSprite('img/wall_3.jpg', 150, 60, 740, 450)
     )
 
     # Игровой цикл
@@ -234,17 +240,21 @@ def run_game() -> None:
                     player.x_velocity = 0
         if not game_over:
             # Отрисовка спрайтов игры
-            player.update(barriers)
             background.reset(window)
-            barriers.draw(window)
-            player.reset(window)
             victory.reset(window)
-            obstacle.reset(window)
-            obstacle.update()
+            player.update(barriers)
+            player.reset(window)
+
+            barriers.draw(window)
+            obstacles.update()
+            obstacles.draw(window)
             bullets.update()
             bullets.draw(window)
+            # Обработка столкновения снарядов со стенами и препятствиями (монстриками)
+            sprite.groupcollide(bullets, barriers, True, False)
+            sprite.groupcollide(bullets, obstacles, True, True)
             # Проверка условий завершения игры
-            if sprite.collide_rect(player, victory) or sprite.collide_rect(player, obstacle):
+            if sprite.collide_rect(player, victory) or sprite.spritecollide(player, obstacles, False):
                 game_over = True
         if game_over:
             # Отрисовка экрана победы или поражения
