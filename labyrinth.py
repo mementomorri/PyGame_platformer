@@ -1,5 +1,8 @@
 from pygame import *
-
+import base64
+from io import BytesIO
+from PIL import Image
+import img2str
 
 # Объявление параметров программы в виде констант
 GAME_DELAY = 50
@@ -29,17 +32,21 @@ class GameSprite(sprite.Sprite):
     Весьма полезен к наследованию игровыми спрайтами, поскольку обладает шаблонным наборов свойств и методом
     для отрсовки.
     """
-    def __init__(self, picture_path: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int):
+
+    def __init__(self, picture_bytestring: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int):
         """
         Конструктор класса GameSprite.
-        :param picture_path: путь к изображению выводящемуся на спрайте
+        :param picture_bytestring: строка типа binary-string полученная путем конвертирования изображения,
+        с помощью модуля base64
         :param sprite_width: ширина спрайта (в пикселях)
         :param sprite_height: высота спрайта (в пикселях)
         :param x_coord: положение спрайта по горизонтали (от левого верхнего угла окна)
         :param y_coord: положение спрайта по вертикали (от левого верхнего угла окна)
         """
         super().__init__()
-        self.image = transform.scale(image.load(picture_path), (sprite_width, sprite_height))
+        image_data = Image.open(BytesIO(base64.b64decode(picture_bytestring)))
+        pygame_image = image.fromstring(image_data.tobytes(), image_data.size, image_data.mode)
+        self.image = transform.scale(pygame_image, (sprite_width, sprite_height))
         self.rect = self.image.get_rect()
         self.rect.x = x_coord
         self.rect.y = y_coord
@@ -58,11 +65,13 @@ class Player(GameSprite):
     методами. Помимо наследуюемых свойств имеет скорость перемещения по горизонтали и вертикали. А также, имеет методы
     для обновления текущего положения спрайта в зависимости от направления движения и выстрелы снарядов.
     """
-    def __init__(self, picture_path: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
+
+    def __init__(self, picture_bytestring: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
                  x_velocity: int = 0, y_velocity: int = 0):
         """
         Конструктор класса Player.
-        :param picture_path: путь к изображению выводящемуся на спрайте
+        :param picture_bytestring: строка типа binary-string полученная путем конвертирования изображения,
+        с помощью модуля base64
         :param sprite_width: ширина спрайта (в пикселях)
         :param sprite_height: высота спрайта (в пикселях)
         :param x_coord: положение спрайта по горизонтали (от левого верхнего угла окна)
@@ -70,7 +79,7 @@ class Player(GameSprite):
         :param x_velocity: скорость передвижения по горизонтали (в пикселях)
         :param y_velocity: скорость передвижения по вертикали (в пикселях)
         """
-        GameSprite.__init__(self, picture_path, sprite_width, sprite_height, x_coord, y_coord)
+        GameSprite.__init__(self, picture_bytestring, sprite_width, sprite_height, x_coord, y_coord)
         self.x_velocity = x_velocity
         self.y_velocity = y_velocity
 
@@ -106,7 +115,7 @@ class Player(GameSprite):
         игровом цикле.
         :param bullets: группа спрайтов, в которую добавляется  снаряд для дальнейшей отрисовки
         """
-        bullets.add(Bullet('img/bullet.png', BULLET_WIDTH, BULLET_HEIGHT, self.rect.left - 10, self.rect.centery - 30,
+        bullets.add(Bullet(img2str.bullet, BULLET_WIDTH, BULLET_HEIGHT, self.rect.left - 10, self.rect.centery - 30,
                            BULLET_VELOCITY))
 
 
@@ -117,18 +126,20 @@ class Obstacle(GameSprite):
     скорости передвижения и направление движения. А также, имеет метод обновления положения на экране. По поведению
     похож на класс Player, за исключением того, что он не управляется игроком, а двигается автономно.
     """
-    def __init__(self, picture_path: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
+
+    def __init__(self, picture_bytestring: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
                  velocity: int):
         """
         Конструктор класса Obstacle.
-        :param picture_path: путь к изображению выводящемуся на спрайте
+        :param picture_bytestring: строка типа binary-string полученная путем конвертирования изображения,
+        с помощью модуля base64
         :param sprite_width: ширина спрайта (в пикселях)
         :param sprite_height: высота спрайта (в пикселях)
         :param x_coord: положение спрайта по горизонтали (от левого верхнего угла окна)
         :param y_coord: положение спрайта по вертикали (от левого верхнего угла окна)
         :param velocity: скорость передвижения препятствия (в пикселях)
         """
-        GameSprite.__init__(self, picture_path, sprite_width, sprite_height, x_coord, y_coord)
+        GameSprite.__init__(self, picture_bytestring, sprite_width, sprite_height, x_coord, y_coord)
         self.velocity = velocity
         self.direction = str  # Направление движения
 
@@ -154,18 +165,20 @@ class Bullet(GameSprite):
     скорости передвижения. А также, имеет метод обновления положения на экране. При выходе за пределы экрана исчезает
     из игры с помощью метода kill.
     """
-    def __init__(self, picture_path: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
+
+    def __init__(self, picture_bytestring: str, sprite_width: int, sprite_height: int, x_coord: int, y_coord: int,
                  velocity: int):
         """
         Конструктор класса Bullet.
-        :param picture_path: путь к изображению выводящемуся на спрайте
+        :param picture_bytestring: строка типа binary-string полученная путем конвертирования изображения,
+        с помощью модуля base64
         :param sprite_width: ширина спрайта (в пикселях)
         :param sprite_height: высота спрайта (в пикселях)
         :param x_coord: положение спрайта по горизонтали (от левого верхнего угла окна)
         :param y_coord: положение спрайта по вертикали (от левого верхнего угла окна)
         :param velocity: скорость передвижения снаряда (в пикселях)
         """
-        GameSprite.__init__(self, picture_path, sprite_width, sprite_height, x_coord, y_coord)
+        GameSprite.__init__(self, picture_bytestring, sprite_width, sprite_height, x_coord, y_coord)
         self.velocity = velocity
 
     def update(self) -> None:
@@ -173,7 +186,7 @@ class Bullet(GameSprite):
         Метод обновления положения снаряда. При выходе за пределы экрана удаляется с помощью метода kill.
         """
         self.rect.x -= self.velocity
-        if self.rect.x < -BULLET_WIDTH/2:
+        if self.rect.x < -BULLET_WIDTH / 2:
             self.kill()
 
 
@@ -182,6 +195,7 @@ def run_game() -> None:
     Запуск игрового цикла.
     :rtype: None
     """
+    init()
 
     # Введение ключевых переменных
     window = display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -189,27 +203,27 @@ def run_game() -> None:
     game_over = False
     run = True
 
-    player = Player('img/player.png', PLAYER_WIDTH, PLAYER_WIDTH, 5, 100, 0, 0)
-    background = GameSprite('img/background.jpg', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
-    victory = GameSprite('img/finish.png', VICTORY_WIDTH, VICTORY_HEIGHT, 30, 500)
-    victory_pic = GameSprite('img/victory_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
-    fail_pic = GameSprite('img/fail_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
+    player = Player(img2str.player, PLAYER_WIDTH, PLAYER_WIDTH, 5, 100, 0, 0)
+    background = GameSprite(img2str.background, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
+    victory = GameSprite(img2str.finish, VICTORY_WIDTH, VICTORY_HEIGHT, 30, 500)
+    victory_pic = GameSprite(img2str.victory_pic, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
+    fail_pic = GameSprite(img2str.fail_pic, WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
 
     bullets = sprite.Group()
     barriers = sprite.Group()
     obstacles = sprite.Group()
     obstacles.add(
-        Obstacle('img/obstacle.png', OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 325, 560, OBSTACLE_VELOCITY)
+        Obstacle(img2str.obstacle, OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 325, 560, OBSTACLE_VELOCITY)
     )
     barriers.add(
-        GameSprite('img/wall_1.jpg', 60, 125, 200, 0),
-        GameSprite('img/wall_1.jpg', 400, 60, 200, 125),
-        GameSprite('img/wall_1.jpg', 300, 60, 0, 300),
-        GameSprite('img/wall_1.jpg', 60, 125, 240, 360),
-        GameSprite('img/wall_1.jpg', 60, 180, 240, 610),
-        GameSprite('img/wall_3.jpg', 60, 200, 680, 200),
-        GameSprite('img/wall_3.jpg', 60, 200, 680, 450),
-        GameSprite('img/wall_3.jpg', 150, 60, 740, 450)
+        GameSprite(img2str.wall_1, 60, 125, 200, 0),
+        GameSprite(img2str.wall_1, 400, 60, 200, 125),
+        GameSprite(img2str.wall_1, 300, 60, 0, 300),
+        GameSprite(img2str.wall_1, 60, 125, 240, 360),
+        GameSprite(img2str.wall_1, 60, 180, 240, 610),
+        GameSprite(img2str.wall_3, 60, 200, 680, 200),
+        GameSprite(img2str.wall_3, 60, 200, 680, 450),
+        GameSprite(img2str.wall_3, 150, 60, 740, 450)
     )
 
     # Игровой цикл
