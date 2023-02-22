@@ -1,5 +1,6 @@
 from pygame import *
 
+
 # Объявление параметров программы в виде констант
 GAME_DELAY = 50
 WINDOW_HEIGHT = 720
@@ -9,8 +10,12 @@ PLAYER_WIDTH = 80
 PLAYER_HEIGHT = 80
 PLAYER_VELOCITY = 10
 
-OBSTACLE_WIDTH = 125
-OBSTACLE_HEIGHT = 125
+VICTORY_HEIGHT = 90
+VICTORY_WIDTH = 90
+
+OBSTACLE_WIDTH = 75
+OBSTACLE_HEIGHT = 75
+OBSTACLE_VELOCITY = 7
 
 BULLET_WIDTH = 55
 BULLET_HEIGHT = 55
@@ -101,7 +106,7 @@ class Player(GameSprite):
         игровом цикле.
         :param bullets: группа спрайтов, в которую добавляется  снаряд для дальнейшей отрисовки
         """
-        bullets.add(Bullet('img/bullet.png', BULLET_WIDTH, BULLET_HEIGHT, self.rect.left, self.rect.centery,
+        bullets.add(Bullet('img/bullet.png', BULLET_WIDTH, BULLET_HEIGHT, self.rect.left - 10, self.rect.centery - 30,
                            BULLET_VELOCITY))
 
 
@@ -134,7 +139,7 @@ class Obstacle(GameSprite):
         """
         if self.rect.y <= 340:
             self.direction = 'bottom'
-        if self.rect.y >= WINDOW_HEIGHT - 125:
+        if self.rect.y >= WINDOW_HEIGHT - 80:
             self.direction = 'top'
         if self.direction == 'top':
             self.rect.y -= self.velocity
@@ -186,7 +191,7 @@ def run_game() -> None:
 
     player = Player('img/player.png', PLAYER_WIDTH, PLAYER_WIDTH, 5, 100, 0, 0)
     background = GameSprite('img/background.jpg', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
-    victory = GameSprite('img/finish.png', 115, 115, 30, 500)
+    victory = GameSprite('img/finish.png', VICTORY_WIDTH, VICTORY_HEIGHT, 30, 500)
     victory_pic = GameSprite('img/victory_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
     fail_pic = GameSprite('img/fail_pic.png', WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0)
 
@@ -194,7 +199,7 @@ def run_game() -> None:
     barriers = sprite.Group()
     obstacles = sprite.Group()
     obstacles.add(
-        Obstacle('img/obstacle.png', OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 325, 560, 7)
+        Obstacle('img/obstacle.png', OBSTACLE_WIDTH, OBSTACLE_HEIGHT, 325, 560, OBSTACLE_VELOCITY)
     )
     barriers.add(
         GameSprite('img/wall_1.jpg', 60, 125, 200, 0),
